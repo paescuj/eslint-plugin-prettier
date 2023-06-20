@@ -44,6 +44,21 @@ const eslint = new ESLint({
           'mdx/code-block': true,
         },
       },
+      // To test 'forceFormatExtracted' option
+      {
+        files: '**/*.md',
+        plugins: ['markdown'],
+        processor: 'markdown/markdown',
+        rules: {
+          'prettier/prettier': 'off',
+        },
+      },
+      {
+        files: '**/*.md/*.js',
+        rules: {
+          'prettier/prettier': ['error', {}, { forceFormatExtracted: true }],
+        },
+      },
       {
         files: '**/eslint-plugin-svelte3/*.svelte',
         plugins: ['svelte3'],
@@ -129,7 +144,7 @@ ruleTester.run('prettier', rule, {
     '16',
     '17',
     '18',
-  ].map(name => loadInvalidFixture(name)),
+  ].map((name) => loadInvalidFixture(name)),
 });
 
 const vueRuleTester = new RuleTester({
@@ -259,6 +274,28 @@ runFixture('*.mdx', [
   ],
 ]);
 
+// Testing 'forceFormatExtracted' option
+// (should only format code block, not the whole file)
+runFixture('*.md', [
+  [
+    {
+      column: 17,
+      endColumn: 26,
+      endLine: 3,
+      fix: {
+        range: [32, 41],
+        text: "'example';",
+      },
+      line: 3,
+      message: 'Replace `"example"` with `\'example\';`',
+      messageId: 'replace',
+      nodeType: null,
+      ruleId: 'prettier/prettier',
+      severity: 2,
+    },
+  ],
+]);
+
 runFixture(
   'eslint-plugin-svelte/*.svelte',
   [
@@ -322,7 +359,7 @@ runFixture(
 function loadInvalidFixture(name) {
   const filename = path.join(__dirname, 'invalid', name + '.txt');
   const src = fs.readFileSync(filename, 'utf8');
-  const sections = src.split(/^[A-Z]+:\n/m).map(x => x.replace(/\n$/, ''));
+  const sections = src.split(/^[A-Z]+:\n/m).map((x) => x.replace(/\n$/, ''));
   const item = {
     code: sections[1],
     output: sections[2],
